@@ -2,7 +2,7 @@
 
 EXT_STORE="/opt/guacamole"
 GUAC_EXT="/config/guacamole/extensions"
-TOMCAT_LOG="/config/log/tomcat9"
+TOMCAT_LOG="/config/log/tomcat"
 CHANGES=false
 
 # Create user
@@ -18,8 +18,7 @@ echo "User GID: $(id -g abc)"
 echo "----------------------"
 
 chown -R abc:abc /config
-chown -R abc:abc /var/run/tomcat /var/lib/tomcat9 /usr/share/tomcat9 /etc/tomcat9
-chown abc:abc /var/run/tomcat
+chown -R abc:abc /opt/tomcat /var/run/tomcat /var/lib/tomcat
 
 OPTMYSQL=${OPT_MYSQL:-N}
 

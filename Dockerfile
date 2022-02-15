@@ -9,7 +9,7 @@
 ARG DEBIAN_VERSION=buster
 ##########################
 ### Get Guacamole Server
-ARG GUAC_VER=1.3.0
+ARG GUAC_VER=1.4.0
 FROM guacamole/guacd:${GUAC_VER} AS guacd
 
 ##########################################
@@ -17,7 +17,7 @@ FROM guacamole/guacd:${GUAC_VER} AS guacd
 ### Use official maven image for the build
 FROM maven:3-jdk-8 AS guacamole
 
-ARG GUAC_VER=1.3.0
+ARG GUAC_VER=1.4.0
 
 ### Use args to build radius auth extension such as
 ### `--build-arg BUILD_PROFILE=lgpl-extensions`
@@ -30,7 +30,8 @@ ADD https://github.com/apache/guacamole-client/archive/${GUAC_VER}.tar.gz /tmp
 
 RUN mkdir -p ${BUILD_DIR}                                && \
     tar -C /tmp -xzf /tmp/${GUAC_VER}.tar.gz             && \
-    mv /tmp/guacamole-client-${GUAC_VER}/* ${BUILD_DIR}
+    mv /tmp/guacamole-client-${GUAC_VER}/* ${BUILD_DIR}  && \
+    mv /tmp/guacamole-client-${GUAC_VER}/.[!.]* ${BUILD_DIR}
 
 WORKDIR ${BUILD_DIR}
 
@@ -50,9 +51,11 @@ RUN chmod +x /opt/guacamole/bin/cpexts.sh  && /opt/guacamole/bin/cpexts.sh "$BUI
 ###############################
 ### Build image without MariaDB
 FROM debian:${DEBIAN_VERSION}-slim AS nomariadb
-LABEL version="1.3.0-1"
+LABEL version="1.4.0"
 
 ARG DEBIAN_RELEASE=buster-backports
+ARG TOMCAT_MAJOR=8
+ARG TOMCAT_VERSION=8.5.73
 
 ARG SERVER_PREFIX_DIR=/usr/local/guacamole
 ARG CLIENT_PREFIX_DIR=/opt/guacamole
@@ -73,32 +76,41 @@ COPY excludes /etc/dpkg/dpkg.cfg.d/excludes
 COPY --from=guacd ${SERVER_PREFIX_DIR} ${SERVER_PREFIX_DIR}
 COPY --from=guacamole ${CLIENT_PREFIX_DIR} ${CLIENT_PREFIX_DIR}
 
-ARG RUNTIME_DEPENDENCIES=" \
-    supervisor             \
-    tomcat9                \
-    pwgen                  \
-    netcat-openbsd         \
-    ca-certificates        \
-    ghostscript            \
-    fonts-liberation       \
-    fonts-dejavu           \
-    xfonts-terminus        \
-    fonts-powerline        \
-    tzdata                 \
-    logrotate              \
-    procps"
+ARG RUNTIME_DEPENDENCIES="  \
+    openjdk-11-jre          \
+    openjdk-11-jre-headless \
+    supervisor              \
+    pwgen                   \
+    netcat-openbsd          \
+    ca-certificates         \
+    ghostscript             \
+    fonts-liberation        \
+    fonts-dejavu            \
+    xfonts-terminus         \
+    fonts-powerline         \
+    tzdata                  \
+    logrotate               \
+    procps                  \
+    wget"
 
 
 ### Install packages and clean up in one command to reduce build size
-RUN useradd -u 99 -U -d /config -s /bin/false abc                                                               && \
-    usermod -G users abc                                                                                        && \
-    mkdir -p /usr/share/man/man1                                                                                && \
-    grep " ${DEBIAN_RELEASE} " /etc/apt/sources.list || echo >> /etc/apt/sources.list                           \
-    "deb http://deb.debian.org/debian ${DEBIAN_RELEASE} main contrib non-free"                                  && \
-    apt-get update                                                                                              && \
-    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends $RUNTIME_DEPENDENCIES                       && \
-    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends $(cat "${SERVER_PREFIX_DIR}"/DEPENDENCIES)  && \
-    rm -rf /var/lib/apt/lists/*
+RUN useradd -u 99 -U -d /config -s /bin/false abc                                                                               && \
+    usermod -G users abc                                                                                                        && \
+    mkdir -p /usr/share/man/man1                                                                                                && \
+    grep " ${DEBIAN_RELEASE} " /etc/apt/sources.list || echo >> /etc/apt/sources.list                                           \
+    "deb http://deb.debian.org/debian ${DEBIAN_RELEASE} main contrib non-free"                                                  && \
+    apt-get update                                                                                                              && \
+    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends $RUNTIME_DEPENDENCIES                                       && \
+    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends $(cat "${SERVER_PREFIX_DIR}"/DEPENDENCIES)                  && \
+    rm -rf /var/lib/apt/lists/*                                                                                                 && \
+    useradd -m -U -d /opt/tomcat -s /bin/false tomcat                                                                           && \
+    wget https://dlcdn.apache.org/tomcat/tomcat-${TOMCAT_MAJOR}/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz   && \
+    tar -xf apache-tomcat-${TOMCAT_VERSION}.tar.gz                                                                              && \
+    mv apache-tomcat-${TOMCAT_VERSION}/* /opt/tomcat                                                                            && \
+    rmdir apache-tomcat-${TOMCAT_VERSION}                                                                                       && \
+    find /opt/tomcat -type d -print0 | xargs -0 chmod 700                                                                       && \
+    chmod +x /opt/tomcat/bin/*.sh
 
 ADD image /
 
@@ -106,19 +118,19 @@ ADD image /
 RUN ${SERVER_PREFIX_DIR}/bin/link-freerdp-plugins.sh ${SERVER_PREFIX_DIR}/lib/freerdp2/libguac*.so
 
 ### Configure Service Startup
-ENV TINI_VERSION v0.18.0
+ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
-RUN rm -Rf /var/lib/tomcat9/webapps/ROOT                                                                                                                        && \
-    cp ${CLIENT_PREFIX_DIR}/guacamole.war /var/lib/tomcat9/webapps/guacamole.war                                                                                && \
-    ln -s /var/lib/tomcat9/webapps/guacamole.war /var/lib/tomcat9/webapps/ROOT.war                                                                              && \
-    chmod +x /etc/firstrun/*.sh                                                                                                                                 && \
-    chmod +x /bin/tini                                                                                                                                          && \
-    mkdir -p /config/guacamole /config/log/tomcat9 /var/lib/tomcat9/temp /var/run/tomcat                                                                        && \
-    ln -s /config/guacamole /etc/guacamole                                                                                                                      && \
-    rmdir /var/log/tomcat9                                                                                                                                      && \
-    ln -s /config/log/tomcat9 /var/log/tomcat9                                                                                                                  && \
-    sed -i '/<\/Host>/i\'"        <Valve className=\"org.apache.catalina.valves.RemoteIpValve\"" /etc/tomcat9/server.xml                                        && \
-    sed -i '/<\/Host>/i\'"               remoteIpHeader=\"x-forwarded-for\" />" /etc/tomcat9/server.xml
+RUN mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                                                                            && \
+    cp ${CLIENT_PREFIX_DIR}/guacamole.war /var/lib/tomcat/webapps/guacamole.war                                                 && \
+    ln -s /var/lib/tomcat/webapps/guacamole.war /var/lib/tomcat/webapps/ROOT.war                                                && \
+    chmod +x /etc/firstrun/*.sh                                                                                                 && \
+    chmod +x /bin/tini                                                                                                          && \
+    mkdir -p /config/guacamole /config/log/tomcat /var/lib/tomcat/temp /var/run/tomcat                                          && \
+    ln -s /opt/tomcat/conf /var/lib/tomcat/conf                                                                                 && \
+    ln -s /config/guacamole /etc/guacamole                                                                                      && \
+    ln -s /config/log/tomcat /var/lib/tomcat/logs                                                                               && \
+    sed -i '/<\/Host>/i\'"        <Valve className=\"org.apache.catalina.valves.RemoteIpValve\"" /opt/tomcat/conf/server.xml    && \
+    sed -i '/<\/Host>/i\'"               remoteIpHeader=\"x-forwarded-for\" />" /opt/tomcat/conf/server.xml
 
 
 EXPOSE 8080
