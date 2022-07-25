@@ -54,8 +54,6 @@ FROM debian:${DEBIAN_VERSION}-slim AS nomariadb
 LABEL version="1.4.0"
 
 ARG DEBIAN_RELEASE=buster-backports
-ARG TOMCAT_MAJOR=8
-ARG TOMCAT_VERSION=8.5.73
 
 ARG SERVER_PREFIX_DIR=/usr/local/guacamole
 ARG CLIENT_PREFIX_DIR=/opt/guacamole
@@ -95,21 +93,22 @@ ARG RUNTIME_DEPENDENCIES="  \
 
 
 ### Install packages and clean up in one command to reduce build size
-RUN useradd -u 99 -U -d /config -s /bin/false abc                                                                               && \
-    usermod -G users abc                                                                                                        && \
-    mkdir -p /usr/share/man/man1                                                                                                && \
-    grep " ${DEBIAN_RELEASE} " /etc/apt/sources.list || echo >> /etc/apt/sources.list                                           \
-    "deb http://deb.debian.org/debian ${DEBIAN_RELEASE} main contrib non-free"                                                  && \
-    apt-get update                                                                                                              && \
-    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends $RUNTIME_DEPENDENCIES                                       && \
-    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends $(cat "${SERVER_PREFIX_DIR}"/DEPENDENCIES)                  && \
-    rm -rf /var/lib/apt/lists/*                                                                                                 && \
-    useradd -m -U -d /opt/tomcat -s /bin/false tomcat                                                                           && \
-    wget https://dlcdn.apache.org/tomcat/tomcat-${TOMCAT_MAJOR}/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz   && \
-    tar -xf apache-tomcat-${TOMCAT_VERSION}.tar.gz                                                                              && \
-    mv apache-tomcat-${TOMCAT_VERSION}/* /opt/tomcat                                                                            && \
-    rmdir apache-tomcat-${TOMCAT_VERSION}                                                                                       && \
-    find /opt/tomcat -type d -print0 | xargs -0 chmod 700                                                                       && \
+RUN useradd -u 99 -U -d /config -s /bin/false abc                                                                                   && \
+    usermod -G users abc                                                                                                            && \
+    mkdir -p /usr/share/man/man1                                                                                                    && \
+    grep " ${DEBIAN_RELEASE} " /etc/apt/sources.list || echo >> /etc/apt/sources.list                                               \
+    "deb http://deb.debian.org/debian ${DEBIAN_RELEASE} main contrib non-free"                                                      && \
+    apt-get update                                                                                                                  && \
+    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends $RUNTIME_DEPENDENCIES                                           && \
+    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends $(cat "${SERVER_PREFIX_DIR}"/DEPENDENCIES)                      && \
+    rm -rf /var/lib/apt/lists/*                                                                                                     && \
+    useradd -m -U -d /opt/tomcat -s /bin/false tomcat                                                                               && \
+    TOMCAT_VERSION=$(wget -qO- https://tomcat.apache.org/download-80.cgi | grep "8\.5\.[0-9]\+</a>" | sed -e 's|.*>\(.*\)<.*|\1|g') && \
+    wget https://dlcdn.apache.org/tomcat/tomcat-8/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                     && \
+    tar -xf apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                                  && \
+    mv apache-tomcat-"$TOMCAT_VERSION"/* /opt/tomcat                                                                                && \
+    rmdir apache-tomcat-"$TOMCAT_VERSION"                                                                                           && \
+    find /opt/tomcat -type d -print0 | xargs -0 chmod 700                                                                           && \
     chmod +x /opt/tomcat/bin/*.sh
 
 ADD image /
