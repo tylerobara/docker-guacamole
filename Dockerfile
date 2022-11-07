@@ -142,7 +142,7 @@ CMD [ "/etc/firstrun/firstrun.sh" ]
 ############################
 ### Build image with MariaDB 
 FROM nomariadb
-LABEL version="1.3.0-1"
+LABEL version="1.4.0"
 
 ARG DEBIAN_RELEASE=buster-backports
 
