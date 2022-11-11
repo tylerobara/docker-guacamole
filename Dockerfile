@@ -89,7 +89,8 @@ ARG RUNTIME_DEPENDENCIES="  \
     tzdata                  \
     logrotate               \
     procps                  \
-    wget"
+    wget                    \
+    curl"
 
 
 ### Install packages and clean up in one command to reduce build size
@@ -119,18 +120,16 @@ RUN ${SERVER_PREFIX_DIR}/bin/link-freerdp-plugins.sh ${SERVER_PREFIX_DIR}/lib/fr
 ### Configure Service Startup
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
-RUN mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                                                                            && \
-    cp ${CLIENT_PREFIX_DIR}/guacamole.war /var/lib/tomcat/webapps/guacamole.war                                                 && \
-    ln -s /var/lib/tomcat/webapps/guacamole.war /var/lib/tomcat/webapps/ROOT.war                                                && \
-    chmod +x /etc/firstrun/*.sh                                                                                                 && \
-    chmod +x /bin/tini                                                                                                          && \
-    mkdir -p /config/guacamole /config/log/tomcat /var/lib/tomcat/temp /var/run/tomcat                                          && \
-    ln -s /opt/tomcat/conf /var/lib/tomcat/conf                                                                                 && \
-    ln -s /config/guacamole /etc/guacamole                                                                                      && \
-    ln -s /config/log/tomcat /var/lib/tomcat/logs                                                                               && \
-    sed -i '/<\/Host>/i\'"        <Valve className=\"org.apache.catalina.valves.RemoteIpValve\"" /opt/tomcat/conf/server.xml    && \
-    sed -i '/<\/Host>/i\'"               remoteIpHeader=\"x-forwarded-for\" />" /opt/tomcat/conf/server.xml
-
+RUN mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                                                                                                                                && \
+    cp ${CLIENT_PREFIX_DIR}/guacamole.war /var/lib/tomcat/webapps/guacamole.war                                                                                                     && \
+    ln -s /var/lib/tomcat/webapps/guacamole.war /var/lib/tomcat/webapps/ROOT.war                                                                                                    && \
+    chmod +x /etc/firstrun/*.sh                                                                                                                                                     && \
+    chmod +x /bin/tini                                                                                                                                                              && \
+    mkdir -p /config/guacamole /config/log/tomcat /var/lib/tomcat/temp /var/run/tomcat                                                                                              && \
+    ln -s /opt/tomcat/conf /var/lib/tomcat/conf                                                                                                                                     && \
+    ln -s /config/guacamole /etc/guacamole                                                                                                                                          && \
+    ln -s /config/log/tomcat /var/lib/tomcat/logs                                                                                                                                   && \
+    sed -i '/<\/Host>/i \        <Valve className=\"org.apache.catalina.valves.RemoteIpValve\"\n               remoteIpHeader=\"x-forwarded-for\" />' /opt/tomcat/conf/server.xml
 
 EXPOSE 8080
 
@@ -146,12 +145,13 @@ LABEL version="1.4.0"
 
 ARG DEBIAN_RELEASE=buster-backports
 
-RUN apt-get update                                                                                                                              && \
-    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends dirmngr gnupg                                                                                    && \
-    apt-key adv --no-tty --recv-keys --keyserver keyserver.ubuntu.com 0xF1656F24C74CD1D8                                                        && \
-    echo 'deb [arch=amd64,i386,ppc64el] http://sfo1.mirrors.digitalocean.com/mariadb/repo/10.2/debian stretch main' >> /etc/apt/sources.list    && \
-    apt-get update                                                                                                                              && \
-    apt-get install -y --no-install-recommends mariadb-server                                                                                   && \
+RUN apt-get update                                                                          && \
+    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends dirmngr gnupg           && \
+    apt-key adv --no-tty --recv-keys --keyserver keyserver.ubuntu.com 0xF1656F24C74CD1D8    && \
+    curl -LsS -O https://downloads.mariadb.com/MariaDB/mariadb_repo_setup                   && \
+    bash mariadb_repo_setup --mariadb-server-version=10.3                                   && \
+    apt-get update                                                                          && \
+    apt-get install -y --no-install-recommends mariadb-server                               && \
     rm -rf /var/lib/apt/lists/*
 
 ADD image-mariadb /

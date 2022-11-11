@@ -11,9 +11,9 @@ sed -i -e '/log_warnings.*=.*/a log_error = /config/databases/mysql_safe.log' /e
 sed -i -e 's/\(user.*=\).*/\1 nobody/g' /etc/mysql/my.cnf
 echo '[mysqld]' > /etc/mysql/conf.d/innodb_file_per_table.cnf
 echo 'innodb_file_per_table' >> /etc/mysql/conf.d/innodb_file_per_table.cnf
-mkdir -p /var/run/mysqld
-chown -R abc:abc /var/log/mysql /var/run/mysqld
-chmod -R 777 /var/log/mysql /var/run/mysqld
+mkdir -p /var/run/mysqld /var/log/mysql
+chown -R abc:abc var/log/mysql /var/lib/mysql /var/run/mysqld
+chmod -R 777 /var/log/mysql /var/lib/mysql /var/run/mysqld
 
 start_mysql() {
   echo "Starting MariaDB."
@@ -78,7 +78,7 @@ if [ -f "$MYSQL_DATABASE"/guacamole/guacamole_user.ibd ]; then
 else
   if [ -f /config/guacamole/guacamole.properties ]; then
     echo "Initializing Guacamole database."
-    /usr/bin/mysql_install_db --datadir="$MYSQL_DATABASE" >/dev/null 2>&1
+    /usr/bin/mysql_install_db --datadir="$MYSQL_DATABASE"
     echo "Database installation complete."
     start_mysql
     echo "Creating Guacamole database."
