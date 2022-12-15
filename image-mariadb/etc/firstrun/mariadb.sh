@@ -8,7 +8,7 @@ MYSQL_DATABASE=/config/databases
 sed -i -e 's#\(datadir.*=\).*#\1 /config/databases#g' /etc/mysql/my.cnf
 sed -i -e 's#\(bind-address.*=\).*#\1 127.0.0.1#g' /etc/mysql/my.cnf
 sed -i -e '/log_warnings.*=.*/a log_error = /config/databases/mysql_safe.log' /etc/mysql/my.cnf
-sed -i -e 's/\(user.*=\).*/\1 nobody/g' /etc/mysql/my.cnf
+sed -i -e 's/\(user.*=\).*/\1 '"$PUID"'/g' /etc/mysql/my.cnf
 echo '[mysqld]' > /etc/mysql/conf.d/innodb_file_per_table.cnf
 echo 'innodb_file_per_table' >> /etc/mysql/conf.d/innodb_file_per_table.cnf
 mkdir -p /var/run/mysqld /var/log/mysql
