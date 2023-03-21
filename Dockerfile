@@ -6,18 +6,18 @@
 # See https://github.com/phusion/baseimage-docker/blob/master/Changelog.md for
 # a list of version numbers.
 
-ARG DEBIAN_VERSION=buster
 ##########################
 ### Get Guacamole Server
-ARG GUAC_VER=1.4.0
-FROM guacamole/guacd:${GUAC_VER} AS guacd
+FROM guacamole/guacd:1.5.0 AS guacd
 
 ##########################################
 ### Build Guacamole Client
 ### Use official maven image for the build
-FROM maven:3-jdk-8 AS guacamole
+FROM maven:3-jdk-8 AS client
+ARG GUAC_VER=1.5.0
 
-ARG GUAC_VER=1.4.0
+# Install chromium-driver for sake of JavaScript unit tests
+RUN apt-get update && apt-get install -y chromium-driver
 
 ### Use args to build radius auth extension such as
 ### `--build-arg BUILD_PROFILE=lgpl-extensions`
@@ -50,60 +50,47 @@ RUN chmod +x /opt/guacamole/bin/cpexts.sh  && /opt/guacamole/bin/cpexts.sh "$BUI
 
 ###############################
 ### Build image without MariaDB
-FROM debian:${DEBIAN_VERSION}-slim AS nomariadb
-LABEL version="1.4.0"
+FROM alpine:latest AS nomariadb
+LABEL version=1.5.0
 
-ARG DEBIAN_RELEASE=buster-backports
-
-ARG SERVER_PREFIX_DIR=/usr/local/guacamole
-ARG CLIENT_PREFIX_DIR=/opt/guacamole
+ARG PREFIX_DIR=/opt/guacamole
 
 ### Set correct environment variables.
 ENV HOME=/config
-ENV DEBIAN_FRONTEND=noninteractive
 ENV LC_ALL=C.UTF-8
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US.UTF-8
-ENV LD_LIBRARY_PATH=${SERVER_PREFIX_DIR}/lib
+ENV LD_LIBRARY_PATH=${PREFIX_DIR}/lib
 ENV GUACD_LOG_LEVEL=info
 
-### Don't let apt install docs or man pages
-COPY excludes /etc/dpkg/dpkg.cfg.d/excludes
-
 ### Copy build artifacts into this stage
-COPY --from=guacd ${SERVER_PREFIX_DIR} ${SERVER_PREFIX_DIR}
-COPY --from=guacamole ${CLIENT_PREFIX_DIR} ${CLIENT_PREFIX_DIR}
+COPY --from=guacd ${PREFIX_DIR} ${PREFIX_DIR}
+COPY --from=client ${PREFIX_DIR} ${PREFIX_DIR}
 
 ARG RUNTIME_DEPENDENCIES="  \
-    openjdk-11-jre          \
-    openjdk-11-jre-headless \
+    openjdk8                \
     supervisor              \
     pwgen                   \
-    netcat-openbsd          \
     ca-certificates         \
     ghostscript             \
-    fonts-liberation        \
-    fonts-dejavu            \
-    xfonts-terminus         \
-    fonts-powerline         \
+    netcat-openbsd          \
+    shadow                  \
+    terminus-font           \
+    ttf-dejavu              \
+    ttf-liberation          \
     tzdata                  \
-    logrotate               \
     procps                  \
+    logrotate               \
     wget                    \
-    curl"
+    bash                    \
+    tini"
 
 
 ### Install packages and clean up in one command to reduce build size
-RUN useradd -u 99 -U -d /config -s /bin/false abc                                                                                   && \
-    usermod -G users abc                                                                                                            && \
-    mkdir -p /usr/share/man/man1                                                                                                    && \
-    grep " ${DEBIAN_RELEASE} " /etc/apt/sources.list || echo >> /etc/apt/sources.list                                               \
-    "deb http://deb.debian.org/debian ${DEBIAN_RELEASE} main contrib non-free"                                                      && \
-    apt-get update                                                                                                                  && \
-    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends $RUNTIME_DEPENDENCIES                                           && \
-    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends $(cat "${SERVER_PREFIX_DIR}"/DEPENDENCIES)                      && \
-    rm -rf /var/lib/apt/lists/*                                                                                                     && \
-    useradd -m -U -d /opt/tomcat -s /bin/false tomcat                                                                               && \
+RUN adduser -h /config -s /bin/false -u 99 -D abc                                                                                   &&\
+    apk add --no-cache ${RUNTIME_DEPENDENCIES}                                                                                      && \
+    xargs apk add --no-cache < ${PREFIX_DIR}/DEPENDENCIES                                                                           && \
+    adduser -h /opt/tomcat -s /bin/false -D tomcat                                                                                  && \
     TOMCAT_VERSION=$(wget -qO- https://tomcat.apache.org/download-80.cgi | grep "8\.5\.[0-9]\+</a>" | sed -e 's|.*>\(.*\)<.*|\1|g') && \
     wget https://dlcdn.apache.org/tomcat/tomcat-8/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                     && \
     tar -xf apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                                  && \
@@ -115,16 +102,13 @@ RUN useradd -u 99 -U -d /config -s /bin/false abc                               
 ADD image /
 
 ### Link FreeRDP plugins into proper path
-RUN ${SERVER_PREFIX_DIR}/bin/link-freerdp-plugins.sh ${SERVER_PREFIX_DIR}/lib/freerdp2/libguac*.so
+#RUN ${PREFIX_DIR}/bin/link-freerdp-plugins.sh ${PREFIX_DIR}/lib/freerdp2/libguac*.so
 
 ### Configure Service Startup
-ENV TINI_VERSION v0.19.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
 RUN mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                                                                                                                                && \
-    cp ${CLIENT_PREFIX_DIR}/guacamole.war /var/lib/tomcat/webapps/guacamole.war                                                                                                     && \
+    cp ${PREFIX_DIR}/guacamole.war /var/lib/tomcat/webapps/guacamole.war                                                                                                            && \
     ln -s /var/lib/tomcat/webapps/guacamole.war /var/lib/tomcat/webapps/ROOT.war                                                                                                    && \
     chmod +x /etc/firstrun/*.sh                                                                                                                                                     && \
-    chmod +x /bin/tini                                                                                                                                                              && \
     mkdir -p /config/guacamole /config/log/tomcat /var/lib/tomcat/temp /var/run/tomcat                                                                                              && \
     ln -s /opt/tomcat/conf /var/lib/tomcat/conf                                                                                                                                     && \
     ln -s /config/guacamole /etc/guacamole                                                                                                                                          && \
@@ -141,18 +125,9 @@ CMD [ "/etc/firstrun/firstrun.sh" ]
 ############################
 ### Build image with MariaDB 
 FROM nomariadb
-LABEL version="1.4.0"
+LABEL version=1.5.0
 
-ARG DEBIAN_RELEASE=buster-backports
-
-RUN apt-get update                                                                          && \
-    apt-get install -t ${DEBIAN_RELEASE} -y --no-install-recommends dirmngr gnupg           && \
-    apt-key adv --no-tty --recv-keys --keyserver keyserver.ubuntu.com 0xF1656F24C74CD1D8    && \
-    curl -LsS -O https://downloads.mariadb.com/MariaDB/mariadb_repo_setup                   && \
-    bash mariadb_repo_setup --mariadb-server-version=10.3                                   && \
-    apt-get update                                                                          && \
-    apt-get install -y --no-install-recommends mariadb-server                               && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add mariadb mariadb-client
 
 ADD image-mariadb /
 

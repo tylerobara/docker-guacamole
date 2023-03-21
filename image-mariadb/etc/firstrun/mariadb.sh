@@ -2,15 +2,11 @@
 
 GUAC_VER="1.0.0"
 
+MYSQL_CONFIG=/etc/my.cnf.d/mariadb-server.cnf
 MYSQL_SCHEMA=/opt/guacamole/mysql/schema
 MYSQL_DATABASE=/config/databases
 
-sed -i -e 's#\(datadir.*=\).*#\1 /config/databases#g' /etc/mysql/my.cnf
-sed -i -e 's#\(bind-address.*=\).*#\1 127.0.0.1#g' /etc/mysql/my.cnf
-sed -i -e '/log_warnings.*=.*/a log_error = /config/databases/mysql_safe.log' /etc/mysql/my.cnf
-sed -i -e 's/\(user.*=\).*/\1 '"$PUID"'/g' /etc/mysql/my.cnf
-echo '[mysqld]' > /etc/mysql/conf.d/innodb_file_per_table.cnf
-echo 'innodb_file_per_table' >> /etc/mysql/conf.d/innodb_file_per_table.cnf
+sed -i '/\[mysqld\]/a user= '"$PUID"'' "$MYSQL_CONFIG"
 mkdir -p /var/run/mysqld /var/log/mysql
 chown -R abc:abc var/log/mysql /var/lib/mysql /var/run/mysqld
 chmod -R 777 /var/log/mysql /var/lib/mysql /var/run/mysqld
