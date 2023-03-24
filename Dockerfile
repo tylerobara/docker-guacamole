@@ -78,6 +78,7 @@ ARG RUNTIME_DEPENDENCIES="  \
     terminus-font           \
     ttf-dejavu              \
     ttf-liberation          \
+    util-linux-login        \
     tzdata                  \
     procps                  \
     logrotate               \
