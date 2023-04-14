@@ -1,48 +1,13 @@
 ### Dockerfile for guacamole
 ### Includes the mysql authentication module preinstalled
 
-# Use phusion/baseimage as base image. To make your builds reproducible, make
-# sure you lock down to a specific version, not to `latest`!
-# See https://github.com/phusion/baseimage-docker/blob/master/Changelog.md for
-# a list of version numbers.
-
-##########################
+########################
 ### Get Guacamole Server
-FROM guacamole/guacd:1.5.0 AS guacd
+FROM guacamole/guacd:1.5.1 AS server
 
-##########################################
-### Build Guacamole Client
-### Use official maven image for the build
-FROM maven:3-jdk-8 AS client
-ARG GUAC_VER=1.5.0
-
-# Install chromium-driver for sake of JavaScript unit tests
-RUN apt-get update && apt-get install -y chromium-driver
-
-### Use args to build radius auth extension such as
-### `--build-arg BUILD_PROFILE=lgpl-extensions`
-ARG BUILD_PROFILE
-
-# Build environment variables
-ENV BUILD_DIR=/tmp/guacamole-docker-BUILD
-
-ADD https://github.com/apache/guacamole-client/archive/${GUAC_VER}.tar.gz /tmp
-
-RUN mkdir -p ${BUILD_DIR}                                && \
-    tar -C /tmp -xzf /tmp/${GUAC_VER}.tar.gz             && \
-    mv /tmp/guacamole-client-${GUAC_VER}/* ${BUILD_DIR}  && \
-    mv /tmp/guacamole-client-${GUAC_VER}/.[!.]* ${BUILD_DIR}
-
-WORKDIR ${BUILD_DIR}
-
-### Add configuration scripts
-RUN mkdir -p /opt/guacamole/bin && cp -R guacamole-docker/bin/* /opt/guacamole/bin/
-
-### Run the build itself
-RUN /opt/guacamole/bin/build-guacamole.sh "$BUILD_DIR" /opt/guacamole "$BUILD_PROFILE"
-
-COPY cpexts.sh /opt/guacamole/bin
-RUN chmod +x /opt/guacamole/bin/cpexts.sh  && /opt/guacamole/bin/cpexts.sh "$BUILD_DIR" /opt/guacamole
+########################
+### Get Guacamole Client
+FROM guacamole/guacamole:1.5.1 AS client
 
 
 ####################
@@ -51,7 +16,7 @@ RUN chmod +x /opt/guacamole/bin/cpexts.sh  && /opt/guacamole/bin/cpexts.sh "$BUI
 ###############################
 ### Build image without MariaDB
 FROM alpine:latest AS nomariadb
-LABEL version=1.5.0
+LABEL version=1.5.1
 
 ARG PREFIX_DIR=/opt/guacamole
 
@@ -62,15 +27,13 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US.UTF-8
 ENV LD_LIBRARY_PATH=${PREFIX_DIR}/lib
 ENV GUACD_LOG_LEVEL=info
+ENV GUACAMOLE_HOME=/config/guacamole
 
 ### Copy build artifacts into this stage
-COPY --from=guacd ${PREFIX_DIR} ${PREFIX_DIR}
+COPY --from=server ${PREFIX_DIR} ${PREFIX_DIR}
 COPY --from=client ${PREFIX_DIR} ${PREFIX_DIR}
 
 ARG RUNTIME_DEPENDENCIES="  \
-    openjdk8                \
-    supervisor              \
-    pwgen                   \
     ca-certificates         \
     ghostscript             \
     netcat-openbsd          \
@@ -79,6 +42,9 @@ ARG RUNTIME_DEPENDENCIES="  \
     ttf-dejavu              \
     ttf-liberation          \
     util-linux-login        \
+    openjdk8                \
+    supervisor              \
+    pwgen                   \
     tzdata                  \
     procps                  \
     logrotate               \
@@ -102,17 +68,12 @@ RUN adduser -h /config -s /bin/false -u 99 -D abc                               
 
 ADD image /
 
-### Link FreeRDP plugins into proper path
-#RUN ${PREFIX_DIR}/bin/link-freerdp-plugins.sh ${PREFIX_DIR}/lib/freerdp2/libguac*.so
-
 ### Configure Service Startup
 RUN mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                                                                                                                                && \
-    cp ${PREFIX_DIR}/guacamole.war /var/lib/tomcat/webapps/guacamole.war                                                                                                            && \
-    ln -s /var/lib/tomcat/webapps/guacamole.war /var/lib/tomcat/webapps/ROOT.war                                                                                                    && \
+    ln -s ${PREFIX_DIR}/guacamole.war /var/lib/tomcat/webapps/ROOT.war                                                                                                              && \
     chmod +x /etc/firstrun/*.sh                                                                                                                                                     && \
     mkdir -p /config/guacamole /config/log/tomcat /var/lib/tomcat/temp /var/run/tomcat                                                                                              && \
     ln -s /opt/tomcat/conf /var/lib/tomcat/conf                                                                                                                                     && \
-    ln -s /config/guacamole /etc/guacamole                                                                                                                                          && \
     ln -s /config/log/tomcat /var/lib/tomcat/logs                                                                                                                                   && \
     sed -i '/<\/Host>/i \        <Valve className=\"org.apache.catalina.valves.RemoteIpValve\"\n               remoteIpHeader=\"x-forwarded-for\" />' /opt/tomcat/conf/server.xml
 
@@ -126,7 +87,7 @@ CMD [ "/etc/firstrun/firstrun.sh" ]
 ############################
 ### Build image with MariaDB 
 FROM nomariadb
-LABEL version=1.5.0
+LABEL version=1.5.1
 
 RUN apk add mariadb mariadb-client
 
