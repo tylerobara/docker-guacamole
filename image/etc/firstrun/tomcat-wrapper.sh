@@ -10,7 +10,7 @@ function shutdown()
 
 date
 echo "Starting Tomcat"
-export JAVA_HOME="/usr/lib/jvm/java-8-openjdk"
+export JAVA_HOME="/usr/lib/jvm/default-jvm"
 export CATALINA_HOME="/opt/tomcat"
 export CATALINA_BASE="/var/lib/tomcat"
 export CATALINA_PID="/var/run/tomcat/tomcat.pid"

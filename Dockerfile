@@ -42,7 +42,8 @@ ARG RUNTIME_DEPENDENCIES="  \
     ttf-dejavu              \
     ttf-liberation          \
     util-linux-login        \
-    openjdk8                \
+    openjdk11-jre           \
+    openjdk11-jre-headless  \
     supervisor              \
     pwgen                   \
     tzdata                  \
@@ -75,7 +76,8 @@ RUN mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                            
     mkdir -p /config/guacamole /config/log/tomcat /var/lib/tomcat/temp /var/run/tomcat                                                                                              && \
     ln -s /opt/tomcat/conf /var/lib/tomcat/conf                                                                                                                                     && \
     ln -s /config/log/tomcat /var/lib/tomcat/logs                                                                                                                                   && \
-    sed -i '/<\/Host>/i \        <Valve className=\"org.apache.catalina.valves.RemoteIpValve\"\n               remoteIpHeader=\"x-forwarded-for\" />' /opt/tomcat/conf/server.xml
+    sed -i '/<\/Host>/i \        <Valve className=\"org.apache.catalina.valves.RemoteIpValve\"\n               remoteIpHeader=\"x-forwarded-for\" />' /opt/tomcat/conf/server.xml   && \
+    echo "org.apache.guacamole = FINE" >> /opt/tomcat/conf/logging.properties
 
 EXPOSE 8080
 
