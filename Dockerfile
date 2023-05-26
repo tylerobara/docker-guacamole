@@ -3,11 +3,11 @@
 
 ########################
 ### Get Guacamole Server
-FROM guacamole/guacd:1.5.1 AS server
+FROM guacamole/guacd:1.5.2 AS server
 
 ########################
 ### Get Guacamole Client
-FROM guacamole/guacamole:1.5.1 AS client
+FROM guacamole/guacamole:1.5.2 AS client
 
 
 ####################
@@ -16,7 +16,7 @@ FROM guacamole/guacamole:1.5.1 AS client
 ###############################
 ### Build image without MariaDB
 FROM alpine:latest AS nomariadb
-LABEL version=1.5.1
+LABEL version=1.5.2
 
 ARG PREFIX_DIR=/opt/guacamole
 
@@ -27,6 +27,7 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US.UTF-8
 ENV LD_LIBRARY_PATH=${PREFIX_DIR}/lib
 ENV GUACD_LOG_LEVEL=info
+ENV LOGBACK_LEVEL=info
 ENV GUACAMOLE_HOME=/config/guacamole
 
 ### Copy build artifacts into this stage
@@ -42,7 +43,6 @@ ARG RUNTIME_DEPENDENCIES="  \
     ttf-dejavu              \
     ttf-liberation          \
     util-linux-login        \
-    openjdk11-jre           \
     openjdk11-jre-headless  \
     supervisor              \
     pwgen                   \
@@ -53,24 +53,21 @@ ARG RUNTIME_DEPENDENCIES="  \
     bash                    \
     tini"
 
-
-### Install packages and clean up in one command to reduce build size
-RUN adduser -h /config -s /bin/false -u 99 -D abc                                                                                   &&\
-    apk add --no-cache ${RUNTIME_DEPENDENCIES}                                                                                      && \
-    xargs apk add --no-cache < ${PREFIX_DIR}/DEPENDENCIES                                                                           && \
-    adduser -h /opt/tomcat -s /bin/false -D tomcat                                                                                  && \
-    TOMCAT_VERSION=$(wget -qO- https://tomcat.apache.org/download-80.cgi | grep "8\.5\.[0-9]\+</a>" | sed -e 's|.*>\(.*\)<.*|\1|g') && \
-    wget https://dlcdn.apache.org/tomcat/tomcat-8/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                     && \
-    tar -xf apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                                  && \
-    mv apache-tomcat-"$TOMCAT_VERSION"/* /opt/tomcat                                                                                && \
-    rmdir apache-tomcat-"$TOMCAT_VERSION"                                                                                           && \
-    find /opt/tomcat -type d -print0 | xargs -0 chmod 700                                                                           && \
-    chmod +x /opt/tomcat/bin/*.sh
-
 ADD image /
 
-### Configure Service Startup
-RUN mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                                                                                                                                && \
+### Install packages and clean up in one command to reduce build size
+RUN adduser -h /config -s /bin/nologin -u 99 -D abc                                                                                                                                 &&\
+    apk add --no-cache ${RUNTIME_DEPENDENCIES}                                                                                                                                      && \
+    xargs apk add --no-cache < ${PREFIX_DIR}/DEPENDENCIES                                                                                                                           && \
+    adduser -h /opt/tomcat -s /bin/false -D tomcat                                                                                                                                  && \
+    TOMCAT_VERSION=$(wget -qO- https://tomcat.apache.org/download-80.cgi | grep "8\.5\.[0-9]\+</a>" | sed -e 's|.*>\(.*\)<.*|\1|g')                                                 && \
+    wget https://dlcdn.apache.org/tomcat/tomcat-8/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                     && \
+    tar -xf apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                                                                                  && \
+    mv apache-tomcat-"$TOMCAT_VERSION"/* /opt/tomcat                                                                                                                                && \
+    rmdir apache-tomcat-"$TOMCAT_VERSION"                                                                                                                                           && \
+    find /opt/tomcat -type d -print0 | xargs -0 chmod 700                                                                                                                           && \
+    chmod +x /opt/tomcat/bin/*.sh                                                                                                                                                   && \
+    mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                                                                                                                                && \
     ln -s ${PREFIX_DIR}/guacamole.war /var/lib/tomcat/webapps/ROOT.war                                                                                                              && \
     chmod +x /etc/firstrun/*.sh                                                                                                                                                     && \
     mkdir -p /config/guacamole /config/log/tomcat /var/lib/tomcat/temp /var/run/tomcat                                                                                              && \
@@ -88,7 +85,7 @@ CMD [ "/etc/firstrun/firstrun.sh" ]
 ############################
 ### Build image with MariaDB 
 FROM nomariadb
-LABEL version=1.5.1
+LABEL version=1.5.2
 
 RUN apk add mariadb mariadb-client
 

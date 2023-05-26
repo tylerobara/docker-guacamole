@@ -20,6 +20,12 @@ echo "----------------------"
 chown -R abc:abc /config
 chown -R abc:abc /opt/tomcat /var/run/tomcat /var/lib/tomcat
 
+# Check if logback.xml exists and set the log level based on LOGBACK_LEVEL value
+if [ ! -f "$GUACAMOLE_HOME"/logback.xml ]; then
+  unzip -o -j /opt/guacamole/guacamole.war WEB-INF/classes/logback.xml -d "$GUACAMOLE_HOME" > /dev/null
+fi
+sed -i 's/ level="[^"]*"/ level="'$LOGBACK_LEVEL'"/' "$GUACAMOLE_HOME"/logback.xml
+
 OPTMYSQL=${OPT_MYSQL:-N}
 
 # Check if properties file exists. If not, copy in the starter database
@@ -339,8 +345,6 @@ if [ "$CHANGES" = true ]; then
 else
   echo "No permissions changes needed."
 fi
-
-# exec /bin/tini -s -- /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf
 
 if [ "$OPTMYSQL" = "Y" ] && [ -f /etc/firstrun/mariadb.sh ]; then
   /etc/firstrun/mariadb.sh
