@@ -3,11 +3,11 @@
 
 ########################
 ### Get Guacamole Server
-FROM guacamole/guacd:1.5.2 AS server
+FROM guacamole/guacd:1.5.3 AS server
 
 ########################
 ### Get Guacamole Client
-FROM guacamole/guacamole:1.5.2 AS client
+FROM guacamole/guacamole:1.5.3 AS client
 
 
 ####################
@@ -16,7 +16,7 @@ FROM guacamole/guacamole:1.5.2 AS client
 ###############################
 ### Build image without MariaDB
 FROM alpine:latest AS nomariadb
-LABEL version=1.5.2
+LABEL version=1.5.3
 
 ARG PREFIX_DIR=/opt/guacamole
 
@@ -85,7 +85,7 @@ CMD [ "/etc/firstrun/firstrun.sh" ]
 ############################
 ### Build image with MariaDB 
 FROM nomariadb
-LABEL version=1.5.2
+LABEL version=1.5.3
 
 RUN apk add mariadb mariadb-client
 
