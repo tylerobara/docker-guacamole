@@ -1,13 +1,15 @@
 ### Dockerfile for guacamole
 ### Includes the mysql authentication module preinstalled
 
+ARG GUAC_VER=1.5.4
+
 ########################
 ### Get Guacamole Server
-FROM guacamole/guacd:1.5.3 AS server
+FROM guacamole/guacd:${GUAC_VER} AS server
 
 ########################
 ### Get Guacamole Client
-FROM guacamole/guacamole:1.5.3 AS client
+FROM guacamole/guacamole:${GUAC_VER} AS client
 
 
 ####################
@@ -15,8 +17,9 @@ FROM guacamole/guacamole:1.5.3 AS client
 
 ###############################
 ### Build image without MariaDB
-FROM alpine:latest AS nomariadb
-LABEL version=1.5.3
+FROM alpine:3.18 AS nomariadb
+ARG GUAC_VER
+LABEL version=$GUAC_VER
 
 ARG PREFIX_DIR=/opt/guacamole
 
@@ -56,9 +59,10 @@ ARG RUNTIME_DEPENDENCIES="  \
 ADD image /
 
 ### Install packages and clean up in one command to reduce build size
-RUN adduser -h /config -s /bin/nologin -u 99 -D abc                                                                                                                                 &&\
-    apk add --no-cache ${RUNTIME_DEPENDENCIES}                                                                                                                                      && \
+
+RUN apk add --no-cache ${RUNTIME_DEPENDENCIES}                                                                                                                                      && \
     xargs apk add --no-cache < ${PREFIX_DIR}/DEPENDENCIES                                                                                                                           && \
+    adduser -h /config -s /bin/nologin -u 99 -D abc                                                                                                                                 && \
     adduser -h /opt/tomcat -s /bin/false -D tomcat                                                                                                                                  && \
     TOMCAT_VERSION=$(wget -qO- https://tomcat.apache.org/download-80.cgi | grep "8\.5\.[0-9]\+</a>" | sed -e 's|.*>\(.*\)<.*|\1|g')                                                 && \
     wget https://dlcdn.apache.org/tomcat/tomcat-8/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                     && \
@@ -85,7 +89,8 @@ CMD [ "/etc/firstrun/firstrun.sh" ]
 ############################
 ### Build image with MariaDB 
 FROM nomariadb
-LABEL version=1.5.3
+ARG GUAC_VER
+LABEL version=$GUAC_VER
 
 RUN apk add mariadb mariadb-client
 
