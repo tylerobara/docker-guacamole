@@ -5,7 +5,7 @@
 ARG GUAC_VER=1.5.5
 
 # https://github.com/apache/tomcat
-ARG TOMCAT_VERSION=8.5.88
+ARG TOMCAT_VERSION=11.0.5
 
 ########################
 ### Get Guacamole Server
@@ -23,6 +23,7 @@ FROM guacamole/guacamole:${GUAC_VER} AS client
 ### Build image without MariaDB
 FROM alpine:3.18 AS nomariadb
 ARG GUAC_VER
+ARG TOMCAT_VERSION
 LABEL version=$GUAC_VER
 
 ARG PREFIX_DIR=/opt/guacamole
