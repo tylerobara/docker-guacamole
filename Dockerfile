@@ -69,7 +69,8 @@ RUN apk add --no-cache ${RUNTIME_DEPENDENCIES}                                  
     adduser -h /config -s /bin/nologin -u 99 -D abc                                                                                                                                 && \
     adduser -h /opt/tomcat -s /bin/false -D tomcat                                                                                                                                  && \
     # TOMCAT_VERSION=$(curl -s "https://api.github.com/repos/apache/tomcat/tags?per_page=2000" | jq -r '[.[] | select(.name | startswith("10."))][0].name')                                                 && \
-    wget https://dlcdn.apache.org/tomcat/tomcat-$(echo "$TOMCAT_VERSION" | awk -F'.' '{print $1}')/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                     && \
+    # wget https://dlcdn.apache.org/tomcat/tomcat-$(echo "$TOMCAT_VERSION" | awk -F'.' '{print $1}')/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                     && \
+    wget https://dlcdn.apache.org/tomcat/tomcat-11/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                    && \
     tar -xf apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                                                                                  && \
     mv apache-tomcat-"$TOMCAT_VERSION"/* /opt/tomcat                                                                                                                                && \
     rmdir apache-tomcat-"$TOMCAT_VERSION"                                                                                                                                           && \
