@@ -2,7 +2,9 @@ name: Build and push image
 on:
   push:
     # Publish semver tags as releases.
-    tags: [ 'v*.*.*' ]
+    tags: [ '*.*.*' ]
+  schedule:
+      - cron: "59 23 * * 1"
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -57,3 +59,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }} # Don't push on PR
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Scan image
+        uses: anchore/scan-action@v6
+        with:
+          image: ${{ env.REGISTRY }}/${{ github.actor }}/guacamole
