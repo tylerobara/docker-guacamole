@@ -53,7 +53,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ github.actor }}/guacamole
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }} # Don't push on PR
@@ -64,3 +64,8 @@ jobs:
         uses: anchore/scan-action@v6
         with:
           image: ${{ env.REGISTRY }}/${{ github.actor }}/guacamole
+
+      - name: upload Anchore scan SARIF report
+          uses: github/codeql-action/upload-sarif@v3
+          with:
+            sarif_file: ${{ steps.scan.outputs.sarif }}
