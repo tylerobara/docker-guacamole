@@ -5,7 +5,7 @@
 ARG GUAC_VER=1.5.5
 
 # https://github.com/apache/tomcat
-ARG TOMCAT_VERSION=9.0.100
+ARG TOMCAT_VERSION=9.0.105
 
 ########################
 ### Get Guacamole Server
@@ -68,15 +68,13 @@ ADD image /
 RUN apk add --no-cache ${RUNTIME_DEPENDENCIES}                                                                                                                                      && \
     xargs apk add --no-cache < ${PREFIX_DIR}/DEPENDENCIES                                                                                                                           && \
     adduser -h /config -s /bin/nologin -u 99 -D abc                                                                                                                                 && \
-    adduser -h /opt/tomcat -s /bin/false -D tomcat                                                                                                                                  
+    adduser -h /opt/tomcat -s /bin/false -D tomcat                                                                                                                                  && \
     # TOMCAT_VERSION=$(curl -s "https://api.github.com/repos/apache/tomcat/tags?per_page=2000" | jq -r '[.[] | select(.name | startswith("10."))][0].name')                                                 && \
     # wget https://dlcdn.apache.org/tomcat/tomcat-$(echo "$TOMCAT_VERSION" | awk -F'.' '{print $1}')/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                     && \
-
-RUN    wget https://dlcdn.apache.org/tomcat/tomcat-9/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                    && \
+    wget https://dlcdn.apache.org/tomcat/tomcat-9/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                    && \
     tar -xf apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                                                                                  && \
-    mv apache-tomcat-"$TOMCAT_VERSION"/* /opt/tomcat                                                                                                                                
-
-RUN    rmdir apache-tomcat-"$TOMCAT_VERSION"                                                                                                                                           && \
+    mv apache-tomcat-"$TOMCAT_VERSION"/* /opt/tomcat                                                                                                                                && \
+    rmdir apache-tomcat-"$TOMCAT_VERSION"                                                                                                                                           && \
     find /opt/tomcat -type d -print0 | xargs -0 chmod 700                                                                                                                           && \
     chmod +x /opt/tomcat/bin/*.sh                                                                                                                                                   && \
     mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                                                                                                                                && \
