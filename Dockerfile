@@ -21,7 +21,7 @@ FROM guacamole/guacamole:${GUAC_VER} AS client
 
 ###############################
 ### Build image without MariaDB
-FROM alpine:3.18 AS nomariadb
+FROM alpine:3.21 AS nomariadb
 ARG GUAC_VER
 ARG TOMCAT_VERSION
 LABEL version=$GUAC_VER
@@ -64,6 +64,8 @@ ARG RUNTIME_DEPENDENCIES="  \
 ADD image /
 
 ### Install packages and clean up in one command to reduce build size
+
+RUN apk upgrade --no-cache
 
 RUN apk add --no-cache ${RUNTIME_DEPENDENCIES}                                                                                                                                      && \
     xargs apk add --no-cache < ${PREFIX_DIR}/DEPENDENCIES                                                                                                                           && \
