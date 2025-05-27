@@ -73,8 +73,9 @@ RUN apk add --no-cache ${RUNTIME_DEPENDENCIES}                                  
     # wget https://dlcdn.apache.org/tomcat/tomcat-$(echo "$TOMCAT_VERSION" | awk -F'.' '{print $1}')/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                     && \
     wget https://dlcdn.apache.org/tomcat/tomcat-9/v"$TOMCAT_VERSION"/bin/apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                    && \
     tar -xf apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                                                                                  && \
-    mv apache-tomcat-"$TOMCAT_VERSION"/* /opt/tomcat                                                                                                                                && \
-    rmdir apache-tomcat-"$TOMCAT_VERSION"                                                                                                                                           && \
+    mv apache-tomcat-"$TOMCAT_VERSION"/* /opt/tomcat                                                                                                                                
+
+RUN    rmdir apache-tomcat-"$TOMCAT_VERSION"                                                                                                                                           && \
     find /opt/tomcat -type d -print0 | xargs -0 chmod 700                                                                                                                           && \
     chmod +x /opt/tomcat/bin/*.sh                                                                                                                                                   && \
     mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                                                                                                                                && \
