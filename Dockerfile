@@ -2,10 +2,10 @@
 ### Includes the mysql authentication module preinstalled
 
 # https://github.com/apache/guacamole-server
-ARG GUAC_VER=1.5.5
+ARG GUAC_VER=1.6.0
 
 # https://github.com/apache/tomcat
-ARG TOMCAT_VERSION=9.0.105
+ARG TOMCAT_VERSION=9.0.118
 
 ########################
 ### Get Guacamole Server
