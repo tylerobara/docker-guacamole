@@ -1,6 +1,7 @@
 name: Build and push image
 on:
   push:
+    branches: [ "master" ]
     # Publish semver tags as releases.
     tags: [ '*.*.*' ]
   schedule:
@@ -19,7 +20,7 @@ jobs:
 
     permissions:
       packages: write
-      contents: read
+      contents: write
 
     steps:
       - run: |
@@ -71,3 +72,17 @@ jobs:
       #   uses: github/codeql-action/upload-sarif@v3
       #   with:
       #     sarif_file: ${{ steps.scan.outputs.sarif }}
+
+      - name: Create version tag
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          VERSION=$(grep -m1 'ARG GUAC_VER=' Dockerfile | cut -d= -f2)
+          if git ls-remote --tags origin "refs/tags/$VERSION" | grep -q .; then
+            echo "Tag $VERSION already exists, skipping"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag "$VERSION"
+            git push origin "$VERSION"
+            echo "Created tag $VERSION"
+          fi
