@@ -93,7 +93,7 @@ elif [ "$OPTMYSQL" = "N" ] || [ "$OPTMYSQLEXT" = "N" ]; then
     echo "Removing MySQL extension."
     rm "$GUAC_EXT"/*jdbc-mysql*.jar
     cd /config/guacamole/lib
-    rm mysql-connector*.jar
+    rm -f mysql-connector*.jar mysql-jdbc.jar
     rm -R /config/mysql-schema
   fi
 fi
