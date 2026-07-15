@@ -58,7 +58,7 @@ if [ "$OPTMYSQL" = "Y" ] || [ "$OPTMYSQLEXT" = "Y" ]; then
   MYSQL_EXT_SRC="$EXT_STORE/extensions/guacamole-auth-jdbc/mysql"
   MYSQL_JDBC_SRC="$EXT_STORE/drivers/mysql-jdbc.jar"
 
-  if [ -f "$GUAC_EXT"/*jdbc-mysql*.jar ]; then
+  if compgen -G "$GUAC_EXT/*jdbc-mysql*.jar" > /dev/null; then
     oldMysqlFiles=( "$GUAC_EXT"/*jdbc-mysql*.jar )
     newMysqlFiles=( "$MYSQL_EXT_SRC"/*jdbc-mysql*.jar )
 
