@@ -304,7 +304,7 @@ if [ "$OPTOPENID" = "Y" ]; then
     echo "Copying OpenID extension."
     mkdir -p "$GUAC_EXT"
     for jar in "$OPENID_EXT_SRC"/*.jar; do
-      cp "$jar" "$GUAC_EXT/1-$(basename "$jar")"
+      cp "$jar" "${GUAC_EXT}/1-$(basename "$jar")"
     done
     CHANGES=true
   fi
