@@ -136,6 +136,7 @@ elif [ "$OPTSQLSERVER" = "N" ]; then
   if [ -f "$GUAC_EXT"/*sqlserver*.jar ]; then
     echo "Removing SQL Server extension."
     rm "$GUAC_EXT"/*sqlserver*.jar
+    rm -f /config/guacamole/lib/mssql-jdbc.jar
     rm -R /config/sqlserver-schema
   fi
 fi
