@@ -78,7 +78,7 @@ RUN apk add --no-cache ${RUNTIME_DEPENDENCIES}                                  
     find /opt/tomcat -type d -print0 | xargs -0 chmod 700                                                                                                                           && \
     chmod +x /opt/tomcat/bin/*.sh                                                                                                                                                   && \
     mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                                                                                                                                && \
-    ln -s ${PREFIX_DIR}/guacamole.war /var/lib/tomcat/webapps/ROOT.war                                                                                                              && \
+    ln -s ${PREFIX_DIR}/webapp/guacamole.war /var/lib/tomcat/webapps/ROOT.war                                                                                                        && \
     chmod +x /etc/firstrun/*.sh                                                                                                                                                     && \
     mkdir -p /config/guacamole /config/log/tomcat /var/lib/tomcat/temp /var/run/tomcat                                                                                              && \
     ln -s /opt/tomcat/conf /var/lib/tomcat/conf                                                                                                                                     && \
