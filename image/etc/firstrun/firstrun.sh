@@ -294,7 +294,9 @@ if [ "$OPTOPENID" = "Y" ]; then
     else
       echo "Upgrading OpenID extension."
       rm "$GUAC_EXT"/*openid*.jar
-      cp "$OPENID_EXT_SRC"/*.jar "${GUAC_EXT}/1-"*
+      for jar in "$OPENID_EXT_SRC"/*.jar; do
+        cp "$jar" "${GUAC_EXT}/1-$(basename "$jar")"
+      done
       CHANGES=true
     fi
   else
