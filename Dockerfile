@@ -42,6 +42,9 @@ ENV GUACAMOLE_HOME=/config/guacamole
 COPY --from=server ${PREFIX_DIR} ${PREFIX_DIR}
 COPY --from=client ${PREFIX_DIR} ${PREFIX_DIR}
 
+### ponytail: guacd libs link against OpenSSL 1.1, removed from Alpine >= 3.21; vendor the .so files (found via LD_LIBRARY_PATH)
+COPY --from=server /lib/libssl.so.1.1 /lib/libcrypto.so.1.1 ${PREFIX_DIR}/lib/
+
 ARG RUNTIME_DEPENDENCIES="  \
     ca-certificates         \
     ghostscript             \
@@ -66,7 +69,7 @@ ADD image /
 ### Install packages and clean up in one command to reduce build size
 
 RUN apk add --no-cache ${RUNTIME_DEPENDENCIES}                                                                                                                                      && \
-    xargs apk add --no-cache < ${PREFIX_DIR}/DEPENDENCIES                                                                                                                           && \
+    grep -vx -e libssl1.1 -e libcrypto1.1 ${PREFIX_DIR}/DEPENDENCIES | xargs apk add --no-cache                                                                                                                   && \
     adduser -h /config -s /bin/nologin -u 99 -D abc                                                                                                                                 && \
     adduser -h /opt/tomcat -s /bin/false -D tomcat                                                                                                                                  && \
     # TOMCAT_VERSION=$(curl -s "https://api.github.com/repos/apache/tomcat/tags?per_page=2000" | jq -r '[.[] | select(.name | startswith("10."))][0].name')                                                 && \
