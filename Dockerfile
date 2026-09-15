@@ -5,7 +5,7 @@
 ARG GUAC_VER=1.6.0
 
 # https://github.com/apache/tomcat
-ARG TOMCAT_VERSION=9.0.118
+ARG TOMCAT_VERSION=9.0.122
 
 ########################
 ### Get Guacamole Server
