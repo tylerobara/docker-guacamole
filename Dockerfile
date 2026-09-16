@@ -86,7 +86,12 @@ RUN apk add --no-cache ${RUNTIME_DEPENDENCIES}                                  
     mkdir -p /config/guacamole /config/log/tomcat /var/lib/tomcat/temp /var/run/tomcat                                                                                              && \
     ln -s /opt/tomcat/conf /var/lib/tomcat/conf                                                                                                                                     && \
     ln -s /config/log/tomcat /var/lib/tomcat/logs                                                                                                                                   && \
-    sed -i '/<\/Host>/i \        <Valve className=\"org.apache.catalina.valves.RemoteIpValve\"\n               remoteIpHeader=\"x-forwarded-for\" />' /opt/tomcat/conf/server.xml
+    sed -i '/<\/Host>/i \        <Valve className=\"org.apache.catalina.valves.RemoteIpValve\"\n               remoteIpHeader=\"x-forwarded-for\" />' /opt/tomcat/conf/server.xml                                                                                                  && \
+    apk update && apk upgrade
+
+### ponytail: guacamole 1.6.0 ships vulnerable nested jars with no newer release; swap in fixed versions from Maven Central
+COPY patch-deps.py /tmp/patch-deps.py
+RUN python3 /tmp/patch-deps.py && rm /tmp/patch-deps.py
 
 EXPOSE 8080
 
