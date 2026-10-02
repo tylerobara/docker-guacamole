@@ -91,7 +91,7 @@ jobs:
         uses: anchore/scan-action@v7
         with:
           image: ${{ env.REGISTRY }}/${{ github.actor }}/guacamole
-          minimum-severity: high
+          severity-cutoff: high
           fail-build: true
 
       # Upload the container scan results to the repo's Security tab
