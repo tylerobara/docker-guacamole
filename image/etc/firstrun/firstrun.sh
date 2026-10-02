@@ -470,11 +470,27 @@ if [ ! -f "$GUAC_EXT"/guacamole-display-statistics.jar ] && [ -f "$EXT_STORE/ext
 fi
 
 # KSM Vault extension (optional)
-if [ ! -f "$GUAC_EXT"/guacamole-vault-ksm.jar ] && [ -f "$EXT_STORE/extensions/guacamole-vault/ksm/guacamole-vault-ksm.jar" ]; then
-  echo "Copying KSM Vault extension."
-  mkdir -p "$GUAC_EXT"
-  cp "$EXT_STORE/extensions/guacamole-vault/ksm/guacamole-vault-ksm.jar" "$GUAC_EXT/"
-  CHANGES=true
+# An unconfigured KSM extension aborts every tunnel creation with
+# "Property ksm-config is required", so only install it when it actually
+# has configuration: ksm-config set in guacamole.properties or OPT_KSM=Y.
+if grep -q '^ksm-config:' /config/guacamole/guacamole.properties; then
+  OPTKSM=Y
+else
+  OPTKSM=${OPT_KSM:-N}
+fi
+if [ "$OPTKSM" = "Y" ]; then
+  if [ ! -f "$GUAC_EXT"/guacamole-vault-ksm.jar ] && [ -f "$EXT_STORE/extensions/guacamole-vault/ksm/guacamole-vault-ksm.jar" ]; then
+    echo "Copying KSM Vault extension."
+    mkdir -p "$GUAC_EXT"
+    cp "$EXT_STORE/extensions/guacamole-vault/ksm/guacamole-vault-ksm.jar" "$GUAC_EXT/"
+    CHANGES=true
+  fi
+elif [ "$OPTKSM" = "N" ]; then
+  if [ -f "$GUAC_EXT"/guacamole-vault-ksm.jar ]; then
+    echo "Removing KSM Vault extension."
+    rm "$GUAC_EXT"/guacamole-vault-ksm.jar
+    CHANGES=true
+  fi
 fi
 
 # JSON Auth extension (optional)
