@@ -13,10 +13,18 @@ chmod -R 777 /var/log/mysql /var/lib/mysql /var/run/mysqld
 
 start_mysql() {
   echo "Starting MariaDB."
-  /usr/bin/mysqld_safe > /dev/null 2>&1 &
+  # ponytail: mysqld_safe crash-loops silently (> /dev/null) on first-time
+  # init under Alpine 3.24 mariadb; start the daemon directly like
+  # supervisord does on normal startup, logging to the datadir. --user=root
+  # is required: mysql_install_db has just created root-owned files and
+  # the chown to abc happens later in this script.
+  /usr/bin/mysqld --user=root --basedir=/usr --datadir="$MYSQL_DATABASE" \
+    --plugin-dir=/usr/lib/mysql/plugin \
+    --pid-file=/var/run/mysqld/mysqld.pid --socket=/var/run/mysqld/mysqld.sock --port=3306 \
+    >> "$MYSQL_DATABASE"/mariadb-init.log 2>&1 &
   RET=1
   while [[ RET -ne 0 ]]; do
-      mysql -uroot -e "status" > /dev/null 2>&1
+      mysqladmin --socket=/var/run/mysqld/mysqld.sock -uroot ping > /dev/null 2>&1
       RET=$?
       sleep 1
   done
@@ -24,7 +32,7 @@ start_mysql() {
 
 stop_mysqld() {
   echo "Stopping MariaDB."
-  mysqladmin -u root shutdown
+  mysqladmin --socket=/var/run/mysqld/mysqld.sock -u root shutdown
   sleep 3
 }
 
