@@ -54,7 +54,7 @@ ARG RUNTIME_DEPENDENCIES="  \
     ttf-dejavu              \
     ttf-liberation          \
     util-linux-login        \
-    openjdk11-jre-headless  \
+    openjdk17-jre-headless  \
     supervisor              \
     pwgen                   \
     tzdata                  \
