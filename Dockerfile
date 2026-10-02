@@ -60,7 +60,6 @@ ARG RUNTIME_DEPENDENCIES="  \
     tzdata                  \
     procps                  \
     logrotate               \
-    wget                    \
     bash                    \
     tini"
 
@@ -68,7 +67,7 @@ ADD image /
 
 ### Install packages and clean up in one command to reduce build size
 
-RUN apk add --no-cache ${RUNTIME_DEPENDENCIES}                                                                                                                                      && \
+RUN apk add --no-cache ${RUNTIME_DEPENDENCIES} wget                                                                                                                                && \
     grep -vx -e libssl1.1 -e libcrypto1.1 ${PREFIX_DIR}/DEPENDENCIES | xargs apk add --no-cache                                                                                                                   && \
     adduser -h /config -s /bin/nologin -u 99 -D abc                                                                                                                                 && \
     adduser -h /opt/tomcat -s /bin/false -D tomcat                                                                                                                                  && \
@@ -78,6 +77,7 @@ RUN apk add --no-cache ${RUNTIME_DEPENDENCIES}                                  
     tar -xf apache-tomcat-"$TOMCAT_VERSION".tar.gz                                                                                                                                  && \
     mv apache-tomcat-"$TOMCAT_VERSION"/* /opt/tomcat                                                                                                                                && \
     rmdir apache-tomcat-"$TOMCAT_VERSION"                                                                                                                                           && \
+    apk del wget                                                                                                                                                                    && \
     find /opt/tomcat -type d -print0 | xargs -0 chmod 700                                                                                                                           && \
     chmod +x /opt/tomcat/bin/*.sh                                                                                                                                                   && \
     mkdir -p /var/lib/tomcat/webapps /var/log/tomcat                                                                                                                                && \

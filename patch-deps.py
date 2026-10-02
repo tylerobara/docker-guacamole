@@ -10,11 +10,11 @@ GUAC = "/opt/guacamole"
 
 # new-entry-name -> maven path
 FETCH = {
-    "jackson-core-2.21.6.jar": "com/fasterxml/jackson/core/jackson-core/2.21.6/jackson-core-2.21.6.jar",
-    "jackson-databind-2.21.6.jar": "com/fasterxml/jackson/core/jackson-databind/2.21.6/jackson-databind-2.21.6.jar",
+    "jackson-core-2.21.7.jar": "com/fasterxml/jackson/core/jackson-core/2.21.7/jackson-core-2.21.7.jar",
+    "jackson-databind-2.21.7.jar": "com/fasterxml/jackson/core/jackson-databind/2.21.7/jackson-databind-2.21.7.jar",
     "jackson-annotations-2.21.jar": "com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21.jar",
-    "jackson-dataformat-yaml-2.21.6.jar": "com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.21.6/jackson-dataformat-yaml-2.21.6.jar",
-    "jackson-module-jaxb-annotations-2.21.6.jar": "com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.21.6/jackson-module-jaxb-annotations-2.21.6.jar",
+    "jackson-dataformat-yaml-2.21.7.jar": "com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.21.7/jackson-dataformat-yaml-2.21.7.jar",
+    "jackson-module-jaxb-annotations-2.21.7.jar": "com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.21.7/jackson-module-jaxb-annotations-2.21.7.jar",
     "mina-core-2.2.8.jar": "org/apache/mina/mina-core/2.2.8/mina-core-2.2.8.jar",
     "commons-lang3-3.18.0.jar": "org/apache/commons/commons-lang3/3.18.0/commons-lang3-3.18.0.jar",
     "bcprov-jdk15to18-1.85.jar": "org/bouncycastle/bcprov-jdk15to18/1.85/bcprov-jdk15to18-1.85.jar",
@@ -28,11 +28,11 @@ FETCH = {
 
 # old-entry-name -> new-entry-name (matched by basename inside .jar/.war archives)
 REPLACE = {
-    "jackson-core-2.19.0.jar": "jackson-core-2.21.6.jar",
-    "jackson-databind-2.19.0.jar": "jackson-databind-2.21.6.jar",
+    "jackson-core-2.19.0.jar": "jackson-core-2.21.7.jar",
+    "jackson-databind-2.19.0.jar": "jackson-databind-2.21.7.jar",
     "jackson-annotations-2.19.0.jar": "jackson-annotations-2.21.jar",
-    "jackson-dataformat-yaml-2.19.0.jar": "jackson-dataformat-yaml-2.21.6.jar",
-    "jackson-module-jaxb-annotations-2.19.0.jar": "jackson-module-jaxb-annotations-2.21.6.jar",
+    "jackson-dataformat-yaml-2.19.0.jar": "jackson-dataformat-yaml-2.21.7.jar",
+    "jackson-module-jaxb-annotations-2.19.0.jar": "jackson-module-jaxb-annotations-2.21.7.jar",
     "mina-core-2.2.4.jar": "mina-core-2.2.8.jar",
     "commons-lang3-3.17.0.jar": "commons-lang3-3.18.0.jar",
     "bcprov-jdk15to18-1.80.jar": "bcprov-jdk15to18-1.85.jar",
