@@ -443,6 +443,16 @@ if [ ! -f "$GUAC_EXT"/guacamole-auth-sso-ssl.jar ] && [ -f "$EXT_STORE/extension
   CHANGES=true
 fi
 
+# The SSL SSO extension is copied in unconditionally above but requires
+# ssl-auth-primary-uri to be configured; when it is missing the provider
+# throws an error that halts the whole authentication chain (login page
+# shows "An error has occurred..."). Tell Guacamole to skip it instead.
+if [ -f "$GUAC_EXT"/guacamole-auth-sso-ssl.jar ] && ! grep -q '^skip-if-unavailable:' /config/guacamole/guacamole.properties; then
+  echo "Adding skip-if-unavailable for unconfigured extensions."
+  echo "skip-if-unavailable: ssl" >> /config/guacamole/guacamole.properties
+  CHANGES=true
+fi
+
 # Recording Storage extension (optional)
 if [ ! -f "$GUAC_EXT"/guacamole-history-recording-storage.jar ] && [ -f "$EXT_STORE/extensions/guacamole-history-recording-storage/guacamole-history-recording-storage.jar" ]; then
   echo "Copying Recording Storage extension."
