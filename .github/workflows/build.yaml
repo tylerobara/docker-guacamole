@@ -50,11 +50,31 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract Guacamole version
+        id: guacver
+        run: |
+          VER=$(grep -m1 '^ARG GUAC_VER=' Dockerfile | cut -d= -f2)
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "major=$(echo "$VER" | cut -d. -f1)" >> "$GITHUB_OUTPUT"
+          echo "major_minor=$(echo "$VER" | cut -d. -f1,2)" >> "$GITHUB_OUTPUT"
+
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ github.actor }}/guacamole
+          # Version hierarchy like ghcr.io/rtvkiz/minimal-traefik:
+          #   1.6.0-20261002  exact app version + build date (immutable)
+          #   1.6.0           exact app version
+          #   1.6             minor channel, gets patch releases
+          #   1               major channel, gets minor + patch releases
+          #   latest          always the newest build
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ steps.guacver.outputs.version }}-{{date 'YYYYMMDD'}}
+            type=raw,value=${{ steps.guacver.outputs.version }}
+            type=raw,value=${{ steps.guacver.outputs.major_minor }}
+            type=raw,value=${{ steps.guacver.outputs.major }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
