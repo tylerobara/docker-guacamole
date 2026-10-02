@@ -21,6 +21,8 @@ jobs:
     permissions:
       packages: write
       contents: write
+      security-events: write # upload SARIF scan results to the Security tab
+      actions: read
 
     steps:
       - run: |
@@ -77,7 +79,7 @@ jobs:
             type=raw,value=${{ steps.guacver.outputs.major }}
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }} # Don't push on PR
@@ -91,10 +93,15 @@ jobs:
           image: ${{ env.REGISTRY }}/${{ github.actor }}/guacamole
           fail-build: false
 
-      # - name: upload Anchore scan SARIF report
-      #   uses: github/codeql-action/upload-sarif@v3
-      #   with:
-      #     sarif_file: ${{ steps.scan.outputs.sarif }}
+      # Upload the container scan results to the repo's Security tab
+      # (Settings -> Code scanning alerts). Skipped on PRs since no image
+      # is pushed there and the scan would evaluate the previous build.
+      - name: upload Anchore scan SARIF report
+        if: github.event_name != 'pull_request' && steps.scan.outputs.sarif != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
+          category: container-scan
 
       - name: Create version tag
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
