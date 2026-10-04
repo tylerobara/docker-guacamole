@@ -1,0 +1,42 @@
+# Grype config for the CI scan (build.yaml -> "Scan image" step, config input).
+# Top-level `ignore:` list (grype >= 0.100; entries under `matching:` are a no-op).
+# Each rule pins CVE + package + the version scanned at triage time, so the
+# severity-cutoff gate still trips if these packages bump, gain a fix version,
+# or any other High/Critical finding appears.
+# All five have no fixed release in Alpine 3.24 (verified via `apk policy`);
+# drop the rule once Alpine ships the fix — the weekly rebuild rescans.
+ignore:
+  # tiff: pulled in by ghostscript (print-to-PDF). No Alpine release yet.
+  - vulnerability: CVE-2023-52356
+    reason: "no fixed tiff release in Alpine 3.24; required by ghostscript"
+    package:
+      name: tiff
+      version: 4.7.1-r0
+      type: apk
+  - vulnerability: CVE-2026-4775
+    reason: "no fixed tiff release in Alpine 3.24; required by ghostscript"
+    package:
+      name: tiff
+      version: 4.7.1-r0
+      type: apk
+  # zlib: required by guacd/libguac and ghostscript. No Alpine release yet.
+  - vulnerability: CVE-2026-85091
+    reason: "no fixed zlib release in Alpine 3.24; required by guacd"
+    package:
+      name: zlib
+      version: 1.3.2-r0
+      type: apk
+  # alsa-lib: audio output for RDP/VNC tunnels via libguac. No Alpine release yet.
+  - vulnerability: CVE-2026-56109
+    reason: "no fixed alsa-lib release in Alpine 3.24; required by libguac audio"
+    package:
+      name: alsa-lib
+      version: 1.2.15.3-r0
+      type: apk
+  # cups-libs: pulled in by ghostscript. CVE open upstream since 2018.
+  - vulnerability: CVE-2018-6553
+    reason: "no fixed cups-libs release in Alpine 3.24; required by ghostscript"
+    package:
+      name: cups-libs
+      version: 2.4.19-r0
+      type: apk

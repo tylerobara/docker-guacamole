@@ -93,6 +93,7 @@ jobs:
           image: ${{ env.REGISTRY }}/${{ github.actor }}/guacamole
           severity-cutoff: high
           fail-build: true
+          config: .grype.yaml
 
       # Upload the container scan results to the repo's Security tab
       # (Settings -> Code scanning alerts). Skipped on PRs since no image
